@@ -1,0 +1,10 @@
+_build/
+node_modules/
+.check-js
+.check-byte
+.check-native
+_tags
+.merlin
+*.byte
+*.native
+*.js

@@ -1,0 +1,19 @@
+{
+  "name": "node-keepass-http",
+  "version": "0.0.1",
+  "description": "keepass http compatible server running on nodejs",
+  "main": "node_okhd.js",
+  "dependencies": {
+    "keepass.io": "~1.1.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "make check"
+  },
+  "keywords": [
+    "keepass",
+    "ocaml"
+  ],
+  "author": "Shunsuke Fukuda",
+  "license": "GPLv3"
+}
