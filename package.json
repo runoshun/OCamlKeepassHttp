@@ -2,7 +2,9 @@
   "name": "node-keepass-http",
   "version": "0.0.1",
   "description": "keepass http compatible server running on nodejs",
+  "bin" : "bin/node-keepasshttp",
   "main": "node_okhd.js",
+  "private" : true,
   "dependencies": {
     "keepass.io": "~1.1.0"
   },

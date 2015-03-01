@@ -197,21 +197,41 @@ end = struct
 
   let parse_opts argv =
     let open Arg in
-    let config = ref (Filename.concat home_dir ".okhd-conf") in
+    let config = ref "" in
+    let db = ref (Filename.concat home_dir "keepass.kdbx") in
     let debug = ref 2 in
+    let host = ref "" in
+    let port = ref (-1) in
+    let req_pass = ref false in
+    let keyfile = ref "" in
     let spec_list = [
-      ("-f", Set_string config, "read specified file as config file. default='~/.okhd-conf'");
-      ("-v", Set_int debug, "set log level. default=2");
+      ("-f", Set_string config, "read specified file as config file.");
+      ("-d", Set_string db,     "set keepass db file. default='keepass.kdbx'");
+      ("-h", Set_string host,   "set http server hostname. default='127.0.0.1'");
+      ("-p", Set_int port,      "set http server hostname. default=19455");
+      ("-k", Set_string keyfile,"set keepass db keyfile path.");
+      ("-r", Set req_pass,      "if set, keepass db password prompt is shown in startup.");
+      ("-v", Set_int debug,     "set log level. default=2");
     ] in
     Arg.parse_argv argv spec_list Sys.print "Keepass HTTP compatible server running on nodejs. Available options:";
-    (!config, !debug)
+    if !config <> "" then
+      let app_config = AppConfig.from_string (Sys.read_file !config) in
+      (app_config, !debug)
+    else
+      let app_config = AppConfig.{
+        httpserver_host = if !host = "" then None else Some !host;
+        httpserver_port = if !port = -1 then None else Some !port;
+        keepass_db = !db;
+        keepass_db_keyfile = if !keyfile = "" then None else Some !keyfile;
+        keepass_db_password_required = Some !req_pass;
+      } in
+      (Result.Ok app_config, !debug)
 
   let main () =
     try
-      let (config_file,log_level) = parse_opts Sys.command_line_args in
+      let (app_config,log_level) = parse_opts Sys.command_line_args in
       Logger.set_log_level log_level;
-      let app_config_or_error = AppConfig.from_string (Sys.read_file config_file) in
-      begin match app_config_or_error with
+      begin match app_config with
       | Result.Error m -> Sys.print m; Sys.print "\n"
       | Result.Ok app_config ->
           read_password app_config (fun password -> start_sever app_config password)

@@ -60,6 +60,7 @@ module type Sys = sig
   val read_file : string -> string
   val command_line_args : string array
   val get_env : string -> string option
+  val open_app : string -> unit
 end
 
 module type Interface = sig

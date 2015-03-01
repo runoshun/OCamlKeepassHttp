@@ -29,6 +29,7 @@ OCAML_TEST_PACKAGES=\
 
 # additional contents _tags and .merlin
 TAGS_ADDITIONAL=\
+<$(SRC_DIR)/node_okhd.ml> : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 <$(SRC_DIR)/backend/js/*.{ml,mli}>   : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 <$(TEST_DIR)/js/*.{ml,mli}>   : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 

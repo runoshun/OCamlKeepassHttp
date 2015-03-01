@@ -38,3 +38,7 @@ let get_env var =
     (fun () -> None)
     (fun e  -> Some (Js.to_string e))
 
+let open_app file_or_url =
+  let node_open = NodeUtils.require "open" in
+  Js.Unsafe.fun_call node_open [| Js.Unsafe.inject (Js.string file_or_url) |]
+
