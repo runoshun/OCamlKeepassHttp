@@ -63,6 +63,7 @@ module type Sys = sig
   val command_line_args : string array
   val get_env : string -> string option
   val open_app : string -> unit
+  val exists_file : string -> bool
 end
 
 module type Interface = sig

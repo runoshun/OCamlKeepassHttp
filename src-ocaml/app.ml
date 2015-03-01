@@ -234,7 +234,11 @@ end = struct
       begin match app_config with
       | Result.Error m -> Sys.print m; Sys.print "\n"
       | Result.Ok app_config ->
-          read_password app_config (fun password -> start_sever app_config password)
+          let db = app_config.AppConfig.keepass_db in
+          if Sys.exists_file db then
+            read_password app_config (fun password -> start_sever app_config password)
+          else
+            Sys.print @@ Printf.sprintf "database file '%s' is not exists.\n" db
       end
     with
     | Arg.Help msg -> Sys.print msg

@@ -14,6 +14,10 @@ end
 
 class type js_fs = object
   method readFileSync : js_string t -> js_string t meth
+  method accessSync : js_string t -> number t -> unit meth
+  method _F_OK_ : number t readonly_prop
+  method _R_OK_ : number t readonly_prop
+  method _W_OK_ : number t readonly_prop
 end
 
 let js_process : js_process t = Js.Unsafe.global##process
@@ -41,4 +45,8 @@ let get_env var =
 let open_app file_or_url =
   let node_open = NodeUtils.require "open" in
   Js.Unsafe.fun_call node_open [| Js.Unsafe.inject (Js.string file_or_url) |]
+
+let exists_file file =
+  try js_fs##accessSync (Js.string file, js_fs##_F_OK_); true with
+  | Js.Error e -> false
 

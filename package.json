@@ -1,6 +1,6 @@
 {
   "name": "node-keepass-http",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "keepass http compatible server running on nodejs",
   "bin" : "bin/node-keepass-http",
   "main": "node_okhd.js",
