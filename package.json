@@ -4,7 +4,6 @@
   "description": "keepass http compatible server running on nodejs",
   "bin" : "bin/node-keepass-http",
   "main": "node_okhd.js",
-  "private" : true,
   "dependencies": {
     "keepass.io": "~1.1.0",
     "open" : "*"
