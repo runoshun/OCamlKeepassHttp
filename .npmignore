@@ -1,0 +1,10 @@
+test-data/
+test-ocaml/
+src-ocaml/
+test_all.js
+_build/
+_tags
+Makefile
+.*
+*.byte
+node-keepass-http-*.tgz

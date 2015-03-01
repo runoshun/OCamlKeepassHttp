@@ -21,8 +21,8 @@ struct
   module KeepassDb = Backend.KeepassDb
   module UrlUtil   = Backend.UrlUtil
 
-  let logins_path = ["Node KeePass HTTP"; "Logins"]
-  let clients_path = ["Node KeePass HTTP"; "Clients"]
+  let logins_path = ["Node-Keepass"; "Logins"]
+  let clients_path = ["Node-Keepass"; "Authorized clients";]
 
   type t = {
     db : KeepassDb.t;
@@ -46,7 +46,7 @@ struct
   let create_login provider ~url ~login ~password =
     let open KeepassDb in
     KeepassDb.create_entry provider.db logins_path
-      { kp_uuid     = Uuid.gen_v4 ();
+      { kp_uuid     = Base64.to_string (Uuid.gen_v4_hex_base64 ());
         kp_url      = Some url;
         kp_username = Some login;
         kp_password = Some password;
@@ -56,7 +56,7 @@ struct
   let create_client_config provider ~client_id ~client_key =
     let open KeepassDb in
     KeepassDb.create_entry provider.db clients_path
-      { kp_uuid     = Uuid.gen_v4 ();
+      { kp_uuid     = Base64.to_string (Uuid.gen_v4_hex_base64 ());
         kp_url      = None;
         kp_username = None;
         kp_password = Some (Base64.to_string client_key);
@@ -92,6 +92,7 @@ struct
                dirty = ref false;
              } in
              Logger.debug (Printf.sprintf "keepass database '%s' is opened." cfg.db_path);
+             (*Logger.debug (KeepassDb.dump_db db);*)
              thunk (Result.Ok provider);
              save provider)
 

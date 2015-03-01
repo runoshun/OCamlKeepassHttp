@@ -49,6 +49,8 @@ module type KeepassDb = sig
   val get_entries : ?path:string list -> t -> keepass_entry array
   val create_entry : t -> string list -> keepass_entry -> unit
 
+  val dump_db : t -> string
+
 end
 
 module type UrlUtil = sig

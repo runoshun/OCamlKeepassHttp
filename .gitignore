@@ -8,3 +8,4 @@ _tags
 *.byte
 *.native
 *.js
+node-keepass-http-*.tgz

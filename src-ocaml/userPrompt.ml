@@ -66,7 +66,7 @@ module MakeHttpPrompt(Backends : Backends.Interface) : UserPromptInterface = str
     let server = HttpServer.create_server handler in
     let port = get_port () in
     HttpServer.start_server server ~port ~host:"localhost" ~callback:(fun _ ->
-      let url = Printf.sprintf "http://localhost:%d." port in
+      let url = Printf.sprintf "http://localhost:%d" port in
       Logger.info (Printf.sprintf "User input is required. Please confirm on %s." url);
       Backends.Sys.open_app url
     );

@@ -1,5 +1,5 @@
 ############## main configurations ###############
-TARGET_NAME  := node_okhd
+TARGET_NAME  := index
 TEST_NAME    := test_all
 
 MAIN_TARGET  = release-js
@@ -29,7 +29,7 @@ OCAML_TEST_PACKAGES=\
 
 # additional contents _tags and .merlin
 TAGS_ADDITIONAL=\
-<$(SRC_DIR)/node_okhd.ml> : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
+<$(SRC_DIR)/$(TARGET_NAME).ml> : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 <$(SRC_DIR)/backend/js/*.{ml,mli}>   : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 <$(TEST_DIR)/js/*.{ml,mli}>   : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 
@@ -111,11 +111,11 @@ test-byte:$(TEST_BYTE_OUTPUT)
 
 test-native:$(TEST_NATIVE_OUTPUT)
 
-debug-byte:$(TARGET_BYTE_OUTPUT)
-	$(MAKE) $(TARGET_BYTE_OUTPUT) OCAMLBUILD_FLAGS="-tag debug"
+debug-byte:
+	$(MAKE) $(TARGET_BYTE_OUTPUT) OCAMLBUILD_FLAGS="-tag debug $(OCAMLBUILD_FLAGS)"
 
 debug-native:$(TARGET_NATIVE_OUTPUT)
-	$(MAKE) $(TARGET_NATIVE_OUTPUT) OCAMLBUILD_FLAGS="-tag debug"
+	$(MAKE) $(TARGET_NATIVE_OUTPUT) OCAMLBUILD_FLAGS="-tag debug $(OCAMLBUILD_FLAGS)"
 
 run-byte: $(TARGET_BYTE_OUTPUT)
 	./$(TARGET_BYTE_OUTPUT) $(RUN_PARAMS)

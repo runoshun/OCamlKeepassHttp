@@ -58,11 +58,6 @@ let keepass_utils : js_keepass_utils t = Js.Unsafe.eval_string "
       return db;
   };
 
-  var base64Encode = function(value) {
-      var buf = new Buffer(value,'utf-8');
-      return buf.toString('base64');
-  };
-
   return {
 
       openDb : function(kdbx, password, keyfile, callback) {
@@ -87,7 +82,7 @@ let keepass_utils : js_keepass_utils t = Js.Unsafe.eval_string "
       createGroup : function(name,uuid) {
           return {
               'Name' : name,
-              'UUID' : base64Encode(uuid),
+              'UUID' : uuid,
           };
       },
 
@@ -201,7 +196,8 @@ let find_or_create_group root_group path =
     match (find_group_by_name name (as_js_array (node##_Group_obj))) with
     | Some g -> g
     | None ->
-        let new_group = keepass_utils##createGroup (Js.string name, Js.string (Uuid.gen_v4 ())) in
+        let uuid_b64 = Uuid.to_hex_base64 (Uuid.gen_v4 ()) in
+        let new_group = keepass_utils##createGroup (Js.string name, Js.string (Base64.to_string uuid_b64)) in
         let group_arr = ensure_group node in
         group_arr##push (new_group) |> ignore;
         new_group)
@@ -265,3 +261,7 @@ let create_entry db path entry =
   js_entry_arr##push (entry) |> ignore;
   keepass_utils##setRootGroup (db,root_group)
 
+let dump_db db =
+  let root_group = keepass_utils##getRootGroup (db) in
+  let json = Js.Unsafe.js_expr "JSON" in
+  Js.to_string (json##stringify (root_group,Js.null,Js.number_of_float 2.0))
