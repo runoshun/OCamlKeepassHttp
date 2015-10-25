@@ -5,7 +5,7 @@ module KeepassProviderTests(Backends : Backends.Interface) = struct
   module Provider = KeepassProvider.Make(Backends)
   module KeepassDb = Backends.KeepassDb
 
-  let config = Provider.make_config "test-data/provider.kdbx" ~password:(Some "test")
+  let config = Provider.make_config "test-data/provider.kdbx" ~password:(Some "test") ~keyfile:None
   let provider_ref = ref (Result.Error "provider is not set.")
 
   let init thunk =

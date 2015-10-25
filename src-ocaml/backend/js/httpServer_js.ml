@@ -60,7 +60,7 @@ let libhttpserver : js_libhttpserver t = Js.Unsafe.eval_string "
         },
 
         startServer : function(server, port, host, callback, errCallback) {
-            server.listen(port,host,511,callback()).on('error', function(err) {
+            server.listen(port,host,511,callback).on('error', function(err) {
               errCallback(err.toString());
             });
         },

@@ -17,13 +17,16 @@ module KeepassHttpServerTests
     let res_ref = ref "" in
     let server = KeepassHttpServer.create_server (fun server req send_res ->
       req_ref := Some req;
-      send_res KeepassHttpServer.ResFailed) in
+      send_res KeepassHttpServer.ResFailed)
+    in
     let port = get_port () in
     let body = Yojson.Safe.to_string req_body in
-    let init thunk = KeepassHttpServer.start_server server ~port:(Some port) ~callback:(fun () ->
-      TestUtils.http_request ~host:"localhost" ~port ~meth:"POST" ~body ~callback:(fun body ->
-        res_ref := body;
-        thunk ())) in
+    let init thunk =
+      KeepassHttpServer.start_server server ~host:"localhost" ~port:port ~callback:(fun () ->
+        TestUtils.http_request ~host:"localhost" ~port ~meth:"POST" ~body ~callback:(fun body ->
+          res_ref := body;
+          thunk ()))
+    in
     let test () =
       KeepassHttpServer.stop_server server;
       assert_equal (Some expected_req) !req_ref ~printer:(function
@@ -38,7 +41,7 @@ module KeepassHttpServerTests
     let server = KeepassHttpServer.create_server (fun server req send_res ->
       send_res res) in
     let port = get_port () in
-    let init thunk = KeepassHttpServer.start_server server ~port:(Some port) ~callback:(fun () ->
+    let init thunk = KeepassHttpServer.start_server server ~host:"localhost" ~port:port ~callback:(fun () ->
       TestUtils.http_request ~host:"localhost" ~port ~meth:"POST" ~body:"{}" ~callback:(fun body ->
         res_ref := Yojson.Safe.from_string body;
         thunk ())) in

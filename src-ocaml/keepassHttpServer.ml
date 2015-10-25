@@ -6,8 +6,7 @@ module type Interface = sig
   type t
 
   val create_server : (t -> request -> (response -> unit) -> unit) -> t
-  val start_server  : port:int -> host:string -> ?callback:(unit -> unit) ->
-                      ?err_callback:(string -> unit) -> t -> unit
+  val start_server  : port:int -> host:string -> ?callback:(unit -> unit) -> ?err_callback:(string -> unit) -> t -> unit
   val stop_server   : t -> unit
 
 end

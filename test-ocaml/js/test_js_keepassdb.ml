@@ -69,7 +69,7 @@ let test_create_entry () =
       let uuid = Uuid.gen_v4 () in
       let printer = function Some s -> s | None -> "None" in
       KeepassDb_js.create_entry db ["TestGroup"; "TestEntries"]
-        { kp_uuid  = uuid;
+        { kp_uuid  = Uuid.to_string uuid;
           kp_title = Some "Test Entry";
           kp_url   = Some "http://www.example.com";
           kp_username = Some "Test User";
@@ -82,7 +82,7 @@ let test_create_entry () =
         | Some title ->
             begin match title with
             | "Test Entry" ->
-                assert_equal uuid entry.kp_uuid;
+                assert_equal (Uuid.to_string uuid) entry.kp_uuid;
                 assert_equal ~printer (Some "http://www.example.com") entry.kp_url;
                 assert_equal ~printer (Some "Test User") entry.kp_username;
                 assert_equal ~printer (Some "TestPassword") entry.kp_password;
@@ -119,7 +119,7 @@ let setup_create_and_savedb thunk =
       | Result.Error m -> assert_failure ("setup_create_and_savedb is failed. " ^ m)
       | Result.Ok db ->
           KeepassDb_js.create_entry db ["***TestGroup***"; "******TestEntries*****"]
-            { kp_uuid  = Uuid.gen_v4 ();
+            { kp_uuid  = (Uuid.to_string (Uuid.gen_v4 ()));
               kp_title = Some "Test Entry";
               kp_url   = Some "http://www.example.com";
               kp_username = Some "Test User";

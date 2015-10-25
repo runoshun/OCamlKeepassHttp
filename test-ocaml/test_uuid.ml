@@ -10,17 +10,19 @@ let no_conflict n =
 let uuid_length () =
   let uuids = Array.to_list (Array.init 10 (fun _ -> Uuid.gen_v4 ())) in
   assert_bool "uuid length is invalid"
-   (List.for_all (fun uuid -> (String.length uuid = 36)) uuids)
+   (List.for_all (fun uuid -> (String.length (Uuid.to_string uuid) = 36)) uuids)
 
 (* uuid v4 header is 1001 00xx xxxx ... *)
 let uuid_v4_header () =
   let uuids = Array.to_list (Array.init 10 (fun _ -> Uuid.gen_v4 ())) in
   assert_bool "uuid v4 header is invalid"
-    (List.for_all (fun uuid -> (uuid.[0] == '9' &&
-                               (uuid.[1] == '0' ||
-                                uuid.[1] == '1' ||
-                                uuid.[1] == '2' ||
-                                uuid.[1] == '3'))) uuids)
+    (List.for_all (fun uuid ->
+      let uuid = Uuid.to_string uuid in
+      (uuid.[0] == '9' &&
+      (uuid.[1] == '0' ||
+       uuid.[1] == '1' ||
+       uuid.[1] == '2' ||
+       uuid.[1] == '3'))) uuids)
 
 let tests = "uuid" >::: [
   TestCase (fun () -> no_conflict 10);
