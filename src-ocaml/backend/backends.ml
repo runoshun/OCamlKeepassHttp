@@ -69,6 +69,7 @@ module type Sys = sig
   val get_env : string -> string option
   val open_app : string -> unit
   val exists_file : string -> bool
+  val chdir : string -> unit
 end
 
 module type Interface = sig

@@ -8,6 +8,7 @@ end
 
 class type js_process = object
   method stdout : js_stdout t readonly_prop
+  method chdir  : js_string t -> unit meth
   method argv : js_string t js_array t readonly_prop
   method env  : js_env t readonly_prop
 end
@@ -54,3 +55,4 @@ let exists_file file =
   try js_fs##accessSync (Js.string file, js_fs##_F_OK_); true with
   | Js.Error e -> false
 
+let chdir path = js_process##chdir (Js.string path)

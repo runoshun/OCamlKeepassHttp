@@ -79,7 +79,8 @@ module Make(Backend:Backends.Interface) = struct
     else
       (Result.Error "config file is not found", !debug, !config)
 
-  let main () =
+  let main exec_dir =
+    Sys.chdir exec_dir;
     try
       let (app_config,log_level,config_path) = parse_opts Sys.command_line_args in
       Logger.set_log_level log_level;
