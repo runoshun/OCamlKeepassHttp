@@ -29,7 +29,6 @@ OCAML_TEST_PACKAGES=\
 
 # additional contents _tags and .merlin
 TAGS_ADDITIONAL=\
-<dist> : exclude\n\
 <$(SRC_DIR)/$(TARGET_NAME).ml> : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 <$(SRC_DIR)/backend/js/*.{ml,mli}>   : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
 <$(TEST_DIR)/js/*.{ml,mli}>   : package(js_of_ocaml.syntax),syntax(camlp4o)\n\
@@ -37,7 +36,7 @@ TAGS_ADDITIONAL=\
 MERLIN_ADDITIONAL=\
 EXT js\n\
 
-OCAMLBUILD_FLAGS     += -use-ocamlfind -X dist
+OCAMLBUILD_FLAGS     += -use-ocamlfind -X semantic -X node_modules
 
 JS_OF_OCAML_FLAGS       += --opt 3
 JS_OF_OCAML_FLAGS_DEBUG += --disable shortvar --pretty --disable inline --disable optcall --enable debuginfo
@@ -86,8 +85,8 @@ CHECK_LOG=/tmp/$(TARGET_NAME)-check.log
 TEST_SETUP_SCRIPT=test-data/test-setup.ml
 
 # vars for js_of_ocaml
-TARGET_JS       := dist/$(TARGET_NAME).js
-TARGET_JS_DEBUG := dist/$(TARGET_NAME)-debug.js
+TARGET_JS       := $(TARGET_NAME).js
+TARGET_JS_DEBUG := $(TARGET_NAME)-debug.js
 TEST_JS         := $(TEST_NAME).js
 
 JS_OF_OCAML := js_of_ocaml

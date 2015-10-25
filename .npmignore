@@ -1,8 +1,16 @@
+Makefile
 test_all.js
+_tags
 .*
 *.byte
 node-keepass-http-*.tgz
+/_build
+/src-ocaml/
+/test-ocaml/
+/test-data/
 /semantic/src/
 /semantic/tasks/
 /semantic/dist/components/
+/semantic/dist/semantic.js
+/semantic/dist/semantic.css
 /semantic.json
