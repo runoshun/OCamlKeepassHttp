@@ -61,6 +61,7 @@ let keepass_utils : js_keepass_utils t = Js.Unsafe.eval_string "
   return {
 
       openDb : function(kdbx, password, keyfile, callback) {
+          if(!keyfile) { keyfile = null; }
           var db = makeDbWithCredentials(password,keyfile);
           db.loadFile(kdbx, function(err) { callback(db,err); });
       },
@@ -141,13 +142,14 @@ let to_js_callback cb =
       cb db err)
 
 let open_db db_path ?(password=None) ?(keyfile=None) cb =
-  let (pass,keyf) = to_js_credentials password keyfile in
-  (* TODO : handle db not found error. *)
-  keepass_utils##openDb (
-    Js.string db_path,
-    Js.Opt.option pass,
-    Js.Opt.option keyf,
-    (to_js_callback cb))
+  match to_js_credentials password keyfile with
+  | (None, None) -> raise (Failure "Must be not empty both password and keyfile.")
+  | (pass, keyf) ->
+    keepass_utils##openDb (
+      Js.string db_path,
+      Js.Opt.option pass,
+      Js.Opt.option keyf,
+      (to_js_callback cb))
 
 let save_db db db_path cb =
   keepass_utils##saveDb (
@@ -265,3 +267,4 @@ let dump_db db =
   let root_group = keepass_utils##getRootGroup (db) in
   let json = Js.Unsafe.js_expr "JSON" in
   Js.to_string (json##stringify (root_group,Js.null,Js.number_of_float 2.0))
+

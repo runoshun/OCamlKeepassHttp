@@ -14,6 +14,7 @@ end
 
 class type js_fs = object
   method readFileSync : js_string t -> js_string t meth
+  method writeFileSync : js_string t -> js_string t -> unit meth
   method accessSync : js_string t -> number t -> unit meth
   method _F_OK_ : number t readonly_prop
   method _R_OK_ : number t readonly_prop
@@ -36,6 +37,9 @@ let command_line_args =
 let read_file path =
   let buf = (js_fs##readFileSync (Js.string path)) in
   Js.to_string (buf##toString ())
+
+let write_file path str =
+  js_fs##writeFileSync (Js.string path, Js.string str)
 
 let get_env var =
   Optdef.case (Js.Unsafe.get js_process##env var)

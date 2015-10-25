@@ -30,4 +30,3 @@ let debug msg = !logger.debug msg
 let info  msg = !logger.info msg
 let error msg = !logger.error msg
 let set_log_level level = !logger.log_level := level
-

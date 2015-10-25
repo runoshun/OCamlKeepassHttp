@@ -1,0 +1,68 @@
+<head>
+  <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.css">
+  <style type="text/css">
+    .clearfix:after {
+      content:"";
+      display:block;
+      clear:both;
+    }
+    .ui.label.floated.right {
+      float : right;
+    }
+    body > div.container {
+      margin : 2em;
+    }
+  </style>
+
+  <script src="js/jquery-1.11.3.js"></script>
+  <script src="js/jquery.serialize-object.compiled.js"></script>
+  <script src="semantic/dist/semantic.js"></script>
+  <script src="js/config-screen.js"></script>
+</head>
+<body>
+  <div class="ui container text">
+
+    <div class="ui attached message clearfix">
+      <div class="header">
+        Node-Keepass-Http Config
+        <a id="server-status" class="ui label floated right"></a>
+      </div>
+    </div>
+
+    <form id="config_form" class="ui form attached fluid segment">
+      <div class="field">
+        <label>KeepassHttp Server host</label>
+        <input name="httpserver_host" placeholder="Default:localhost" type="text">
+      </div>
+      <div class="field">
+        <label>KeepassHttp Server port</label>
+        <input name="httpserver_port" placeholder="Default:19455" type="number">
+      </div>
+      <div class="field">
+        <label>Keepass Database</label>
+        <input name="keepass_db" placeholder="Default:keepass.kdbx" type="text">
+      </div>
+      <div class="field">
+        <label>Keepass Database Password</label>
+        <input name="password" placeholder="Default:None" type="password">
+      </div>
+      <div class="field">
+        <label>Keepass Database Key File</label>
+        <input name="keepass_db_keyfile" placeholder="Default:None" type="text">
+      </div>
+
+      <div class="clearfix">
+        <div class="ui right floated blue labeled icon submit button">
+          <i class="play icon"></i>
+          Restart Server
+        </div>
+      </div>
+    </form>
+
+    <div id="error-msg" class="ui message error hidden">
+      <i class="icon remove red"></i>
+      <span class="content"></span>
+    </div>
+
+</body>
+

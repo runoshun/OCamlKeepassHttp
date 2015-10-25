@@ -16,6 +16,7 @@ module StringMap = Map.Make(String)
 
 module type HttpServer = sig
   type httpserver
+  type buffer
 
   type raw_request = {
     hr_method  : string;
@@ -24,9 +25,12 @@ module type HttpServer = sig
     hr_headers : string StringMap.t;
   }
 
-  val create_server   : (httpserver -> raw_request -> (string -> string -> unit) -> unit) -> httpserver
-  val start_server    : httpserver -> port:int -> host:string -> callback:(unit -> unit) -> unit
+  val create_server   : (httpserver -> raw_request -> (int -> string -> buffer -> unit) -> unit) -> httpserver
+  val start_server    : httpserver -> port:int -> host:string -> callback:(unit -> unit) -> err_callback:(string -> unit) -> unit
   val stop_server     : httpserver -> unit
+
+  val buffer_of_string : string -> buffer
+  val buffer_of_file   : string -> buffer
 end
 
 module type KeepassDb = sig
@@ -60,6 +64,7 @@ end
 module type Sys = sig
   val print : string -> unit
   val read_file : string -> string
+  val write_file : string -> string -> unit
   val command_line_args : string array
   val get_env : string -> string option
   val open_app : string -> unit

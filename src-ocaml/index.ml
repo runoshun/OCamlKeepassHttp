@@ -1,9 +1,9 @@
 
-module NodeApp = App.Make(Backends.Js)
+module App = App.Make(Backends.Js)
 
 let start () =
   Logger.init (module Backends.Js);
-  NodeApp.main ()
+  App.main ()
 
 let () =
   let m = Js.Unsafe.js_expr "module" in

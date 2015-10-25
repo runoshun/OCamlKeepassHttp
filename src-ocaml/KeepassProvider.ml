@@ -1,10 +1,10 @@
 
-module type ProviderInterface = sig
+module type Interface = sig
   type t
   type provider_config
   type keepass_entry
 
-  val make_config    : ?password:string option -> ?keyfile:string option -> string -> provider_config
+  val make_config    : password:string option -> keyfile:string option -> string -> provider_config
   val with_provider  : provider_config -> (t Result.t -> unit) -> unit
 
   val get_client_key : t -> string -> Base64.t Result.t
@@ -15,7 +15,7 @@ module type ProviderInterface = sig
 end
 
 module Make(Backend : Backends.Interface) :
-  ProviderInterface with type keepass_entry := Backend.KeepassDb.keepass_entry =
+  Interface with type keepass_entry := Backend.KeepassDb.keepass_entry =
 struct
 
   module KeepassDb = Backend.KeepassDb
@@ -36,7 +36,9 @@ struct
     keyfile : string option;
   }
 
-  let make_config ?(password=None) ?(keyfile=None) db_path =
+  let make_config ~password ~keyfile db_path =
+    let password = match password with Some "" -> None | Some s -> Some s | None -> None in
+    let keyfile = match keyfile with Some "" -> None | Some s -> Some s | None -> None in
     { db_path; password; keyfile; }
 
   let search_entries provider ?(path=[]) search_f =
@@ -75,13 +77,13 @@ struct
 
   let save provider =
     if !(provider.dirty) then begin
-      Logger.debug (Printf.sprintf "keepass database '%s' is saved." provider.db_path);
+      Logger.debug (Printf.sprintf "[Provider] keepass database '%s' is saved." provider.db_path);
       KeepassDb.save_db provider.db provider.db_path (fun _ _ -> ())
     end else
-      Logger.debug (Printf.sprintf "keepass database '%s' is not dirty, skip saving." provider.db_path)
+      Logger.debug (Printf.sprintf "[Provider] keepass database '%s' is not dirty, skip saving." provider.db_path)
 
   let with_provider cfg thunk =
-    KeepassDb.open_db cfg.db_path ~password:cfg.password ~keyfile:cfg.keyfile
+    try KeepassDb.open_db cfg.db_path ~password:cfg.password ~keyfile:cfg.keyfile
       (fun db err ->
          match err with
          | Some e -> thunk (Result.Error e)
@@ -91,9 +93,11 @@ struct
                db_path = cfg.db_path;
                dirty = ref false;
              } in
-             Logger.debug (Printf.sprintf "keepass database '%s' is opened." cfg.db_path);
+             Logger.debug (Printf.sprintf "[Provider] keepass database '%s' is opened." cfg.db_path);
              (*Logger.debug (KeepassDb.dump_db db);*)
              thunk (Result.Ok provider);
              save provider)
+    with
+    | e -> thunk (Result.Error (Printexc.to_string e))
 
 end

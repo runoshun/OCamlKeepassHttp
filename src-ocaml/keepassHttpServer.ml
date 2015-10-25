@@ -1,26 +1,25 @@
 
-module type KeepassHttpServerInterface = sig
+module type Interface = sig
 
   include module type of KeepassHttpServerTypes
 
-  type httpserver
+  type t
 
-  val create_server : (httpserver -> request -> (response -> unit) -> unit) -> httpserver
-  val start_server  : ?port:int option -> ?host:string option -> ?callback:(unit -> unit) -> httpserver -> unit
-  val stop_server   : httpserver -> unit
+  val create_server : (t -> request -> (response -> unit) -> unit) -> t
+  val start_server  : port:int -> host:string -> ?callback:(unit -> unit) ->
+                      ?err_callback:(string -> unit) -> t -> unit
+  val stop_server   : t -> unit
 
 end
 
-module Make(Backend : Backends.Interface)
-  : KeepassHttpServerInterface with type httpserver := Backend.HttpServer.httpserver =
-
-struct
+module Make(Backend : Backends.Interface) : Interface  = struct
 
   include KeepassHttpServerTypes
 
   module StringMap  = Backends.StringMap
-
   module HttpServer = Backend.HttpServer
+
+  type t = Backend.HttpServer.httpserver
 
   let find_string_val key keyvals =
     match List.assoc key keyvals with
@@ -87,7 +86,6 @@ struct
 
   let parse_request http_req =
     let open HttpServer in
-
     match http_req.hr_method with
     | "POST" ->
         begin try
@@ -141,7 +139,7 @@ struct
 
   let make_http_hander keepass_http_handler = (fun server http_req send_res ->
     HttpServer.(
-      Logger.debug "HTTP request received.";
+      Logger.debug "[KeepssHttp] HTTP request received.";
       Logger.debug (Printf.sprintf "  method : %s" http_req.hr_method);
       Logger.debug (Printf.sprintf "  url    : %s" http_req.hr_url);
       Logger.debug                 "  headers:";
@@ -153,19 +151,17 @@ struct
     let write_res res =
       let response_json = response_to_json res in
       let res_string = Yojson.Safe.to_string response_json in
-      Logger.debug (Printf.sprintf "send HTTP response:\n%s" res_string);
-      send_res "application/json" res_string
+      Logger.debug (Printf.sprintf "[KeepssHttp] send HTTP response:\n%s" res_string);
+      send_res 200 "application/json" (HttpServer.buffer_of_string res_string)
     in
     keepass_http_handler server request write_res)
 
   let create_server handler =
     HttpServer.create_server (make_http_hander handler)
 
-  let start_server ?(port=None) ?(host=None) ?(callback=(fun () -> ())) server =
-    let port = match port with Some p -> p | None -> 19455 in
-    let host = match host with Some h -> h | None -> "127.0.0.1" in
-    Logger.info (Printf.sprintf "Keepass HTTP Server started at %s:%d." host port);
-    HttpServer.start_server ~port ~host ~callback server
+  let start_server ~port ~host ?(callback=(fun () -> ())) ?(err_callback=(fun _ -> ())) server =
+    Logger.info (Printf.sprintf "[KeepssHttp] started at %s:%d." host port);
+    HttpServer.start_server ~port ~host ~callback ~err_callback server
 
   let stop_server server =
     HttpServer.stop_server server

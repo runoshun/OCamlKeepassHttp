@@ -21,11 +21,12 @@ module MakeHttpPrompt(Backends : Backends.Interface) : UserPromptInterface = str
 
   let make_handle_request opts callback = (fun server req send_res ->
     let open HttpServer in
+    let send_res st ct body = send_res st ct (HttpServer.buffer_of_string body) in
     match req.hr_method with
     | "GET" ->
         let input_type = if opts.input_password then "password" else "text" in
         (* show msg as html*)
-        send_res "text/html" (Printf.sprintf "
+        send_res 200 "text/html" (Printf.sprintf "
         <body>
           <p>%s</p>
           <form method=\"POST\" action=\"/\">
@@ -43,13 +44,13 @@ module MakeHttpPrompt(Backends : Backends.Interface) : UserPromptInterface = str
           if String.sub body 0 (start_idx - 1) = "value" then begin
             let value = String.sub body start_idx (String.length body - start_idx) in
             callback (Result.Ok value);
-            send_res "text/plain" ("successfully submited.")
+            send_res 200 "text/plain" ("successfully submited.")
           end else
             raise (Invalid_argument "key is not 'value'")
         with
         | Invalid_argument s ->
             callback (Result.Error ("can't parse value from posted data: " ^ s));
-            send_res "text/plain" "can't submit value, parse error occured.";
+            send_res 200 "text/plain" "can't submit value, parse error occured.";
         end;
         HttpServer.stop_server server
     | m ->
@@ -65,7 +66,7 @@ module MakeHttpPrompt(Backends : Backends.Interface) : UserPromptInterface = str
     let handler = make_handle_request options callback in
     let server = HttpServer.create_server handler in
     let port = get_port () in
-    HttpServer.start_server server ~port ~host:"localhost" ~callback:(fun _ ->
+    HttpServer.start_server server ~port ~host:"localhost" ~err_callback:(fun _ -> ()) ~callback:(fun _ ->
       let url = Printf.sprintf "http://localhost:%d" port in
       Logger.info (Printf.sprintf "User input is required. Please confirm on %s." url);
       Backends.Sys.open_app url
