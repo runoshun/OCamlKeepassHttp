@@ -1,4 +1,5 @@
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" type="text/css" href="semantic/dist/semantic.min.css">
   <style type="text/css">
     .clearfix:after {
@@ -31,24 +32,26 @@
 
     <form id="config_form" class="ui form attached fluid segment">
       <div class="field">
-        <label>KeepassHttp Server host</label>
-        <input name="httpserver_host" placeholder="Default:localhost" type="text">
-      </div>
-      <div class="field">
-        <label>KeepassHttp Server port</label>
-        <input name="httpserver_port" placeholder="Default:19455" type="number">
-      </div>
-      <div class="field">
-        <label>Keepass Database</label>
-        <input name="keepass_db" placeholder="Default:keepass.kdbx" type="text">
-      </div>
-      <div class="field">
         <label>Keepass Database Password</label>
         <input name="password" placeholder="Default:None" type="password">
       </div>
       <div class="field">
         <label>Keepass Database Key File</label>
         <input name="keepass_db_keyfile" placeholder="Default:None" type="text">
+      </div>
+      <div class="two fields">
+        <div class="twelve wide field">
+          <label>KeepassHttp Server Host</label>
+          <input name="httpserver_host" placeholder="Default:localhost" type="text">
+        </div>
+        <div class="four wide field">
+          <label>Port</label>
+          <input name="httpserver_port" placeholder="Default:19455" type="number">
+        </div>
+      </div>
+      <div class="field">
+        <label>Keepass Database</label>
+        <input name="keepass_db" placeholder="/path/to/keepassdb.kdbx" type="text">
       </div>
 
       <div class="clearfix">
@@ -59,10 +62,9 @@
       </div>
     </form>
 
-    <div id="error-msg" class="ui message error hidden">
-      <i class="icon remove red"></i>
-      <span class="content"></span>
-    </div>
-
+      <div id="error-msg" class="ui error message hidden">
+        <i class="icon remove red"></i>
+        <span class="content"></span>
+      </div>
 </body>
 
