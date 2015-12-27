@@ -16,7 +16,9 @@ end
 class type js_fs = object
   method readFileSync : js_string t -> js_string t meth
   method writeFileSync : js_string t -> js_string t -> unit meth
+  method existsSync : js_string t -> bool t meth
   method accessSync : js_string t -> number t -> unit meth
+  method accessSync_prop : 'a optdef_prop
   method _F_OK_ : number t readonly_prop
   method _R_OK_ : number t readonly_prop
   method _W_OK_ : number t readonly_prop
@@ -52,7 +54,15 @@ let open_app file_or_url =
   Js.Unsafe.fun_call node_open [| Js.Unsafe.inject (Js.string file_or_url) |]
 
 let exists_file file =
-  try js_fs##accessSync (Js.string file, js_fs##_F_OK_); true with
+  try
+    begin match Optdef.to_option js_fs##accessSync_prop with
+    | Some m ->
+        js_fs##accessSync (Js.string file, js_fs##_F_OK_);
+        true
+    | None ->
+        Js.to_bool (js_fs##existsSync (Js.string file))
+    end
+  with
   | Js.Error e -> false
 
 let chdir path = js_process##chdir (Js.string path)
