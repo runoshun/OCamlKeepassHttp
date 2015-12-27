@@ -84,11 +84,11 @@ module Make(Backend:Backends.Interface) = struct
     try
       let (app_config,log_level,config_path) = parse_opts Sys.command_line_args in
       Logger.set_log_level log_level;
-      Logger.debug ("config = " ^ (Sys.read_file config_path));
       let app_config = begin match app_config with
       | Result.Error e -> AppConfig.default
       | Result.Ok app_config -> app_config
       end in
+      Logger.debug ("config = " ^ (AppConfig.to_string app_config));
       start app_config config_path
     with
     | Arg.Help msg -> Sys.print msg
