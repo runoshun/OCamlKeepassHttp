@@ -35,7 +35,7 @@ module Make(Backend:Backends.Interface) = struct
                    config.AppConfig.configserver_host
                    config.AppConfig.configserver_port)
 
-  let make_restart_server state = fun _done ->
+  let make_restart_server state = fun post_action _done ->
     let open UiServerTypes in
     with_check_db state (function
     | Some e -> _done (Some e)
@@ -49,7 +49,7 @@ module Make(Backend:Backends.Interface) = struct
           _done (Some err)
         in
         let callback () = _done None in
-        let app = KeepassHttpApp.start_app !(state.config) !(state.password) ~err_callback ~callback in
+        let app = KeepassHttpApp.start_app post_action !(state.config) !(state.password) ~err_callback ~callback in
         state.server := Some app;)
 
   let start app_config config_path =
@@ -59,6 +59,7 @@ module Make(Backend:Backends.Interface) = struct
       config_path = ref config_path;
       server = ref None;
       password = ref None;
+      actions = ref [];
     } in
     let restart_server = make_restart_server state in
     UiApp.start_app state restart_server |> ignore;
@@ -85,7 +86,9 @@ module Make(Backend:Backends.Interface) = struct
       let (app_config,log_level,config_path) = parse_opts Sys.command_line_args in
       Logger.set_log_level log_level;
       let app_config = begin match app_config with
-      | Result.Error e -> AppConfig.default
+      | Result.Error e ->
+          Logger.info e;
+          AppConfig.default
       | Result.Ok app_config -> app_config
       end in
       Logger.debug ("config = " ^ (AppConfig.to_string app_config));

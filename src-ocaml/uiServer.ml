@@ -1,7 +1,7 @@
 
 module type Interface = sig
 
-  include module type of UiServerTypes
+  open UiServerTypes
 
   type t
 
@@ -11,9 +11,9 @@ module type Interface = sig
 
 end
 
-module Make(Backend:Backends.Interface) : Interface  with type 'a app_state := 'a UiServerTypes.app_state = struct
+module Make(Backend:Backends.Interface) : Interface = struct
 
-  include UiServerTypes
+  open UiServerTypes
 
   type t = Backend.HttpServer.httpserver
 
@@ -26,10 +26,10 @@ module Make(Backend:Backends.Interface) : Interface  with type 'a app_state := '
     Logger.debug "[UiServer] receive request :";
     Logger.debug (Printf.sprintf "  method : %s" http_req.hr_method);
     Logger.debug (Printf.sprintf "  url    : %s" http_req.hr_url);
-    Logger.debug                 "  headers:";
+    Logger.verbose                 "  headers:";
     StringMap.iter (fun k v ->
-        Logger.debug (Printf.sprintf "    %s : %s" k v)) http_req.hr_headers;
-      Logger.debug (Printf.sprintf "  body   :\n%s" http_req.hr_body);
+        Logger.verbose (Printf.sprintf "    %s : %s" k v)) http_req.hr_headers;
+    Logger.debug (Printf.sprintf "  body   :\n%s" http_req.hr_body);
     match http_req.hr_method with
     | "GET" when http_req.hr_url = "/state" ->
         ReqGetState
@@ -39,8 +39,28 @@ module Make(Backend:Backends.Interface) : Interface  with type 'a app_state := '
         ReqPostConfig (http_req.hr_body)
     | "POST" when http_req.hr_url = "/restart_keepass_http" ->
         ReqPostRestartKeepassHttpServer
+    | "POST" when http_req.hr_url = "/action" ->
+        ReqPostAction (http_req.hr_body)
+    | "POST" when http_req.hr_url = "/delete_action" ->
+        ReqPostDeleteAction (http_req.hr_body)
     | meth   ->
         ReqInvalid
+
+  let json_of_actions actions =
+    let to_json action =
+      let common = [
+        ("date", `String action.act_date);
+        ("id",   `String (Uuid.to_string action.act_id));
+      ] in
+      match action.act_type with
+      | ActTypeAssociate(client) ->
+          `Assoc (
+            ("type", `String "associate") ::
+            ("client", `String client) ::
+            common
+          )
+    in
+    `List (List.map to_json actions)
 
   let string_of_state state =
     let config = AppConfig.to_json !(state.config) in
@@ -50,6 +70,7 @@ module Make(Backend:Backends.Interface) : Interface  with type 'a app_state := '
       ("config", config);
       ("password", `String password);
       ("server_running", `Bool server_running);
+      ("actions", json_of_actions !(state.actions));
     ] in
     Yojson.Safe.to_string json
 
@@ -77,6 +98,7 @@ module Make(Backend:Backends.Interface) : Interface  with type 'a app_state := '
     let buffer_of_string = HttpServer.buffer_of_string in
     match res with
     | ResGetStatic(rel_path) ->
+        Logger.debug (Printf.sprintf "[UiServer] ResGetStatic, path = %s" rel_path);
         let ext = get_ext rel_path in
         let content_type = try List.assoc ext content_type_map with
         | _ -> "application/octet-stream" in
@@ -87,23 +109,27 @@ module Make(Backend:Backends.Interface) : Interface  with type 'a app_state := '
         | e -> (404,"text/plain", buffer_of_string "")
         end
     | ResGetState(state) ->
-        (200,"application/json",buffer_of_string (string_of_state state))
+        let state = string_of_state state in
+        Logger.debug (Printf.sprintf "[UiServer] ResGetState, state = %s" state);
+        (200,"application/json",buffer_of_string state)
     | ResSuccess ->
+        Logger.debug (Printf.sprintf "[UiServer] ResSuccess");
         (200, "application/json", buffer_of_string "{}")
     | ResError(error) ->
+        Logger.debug (Printf.sprintf "[UiServer] ResError, error = %s" error);
         (200, "application/json", buffer_of_string (Printf.sprintf "{ \"error\" : \"%s\" }" error))
     | ResInvalid(error) ->
+        Logger.debug (Printf.sprintf "[UiServer] ResInvalid error = %s" error);
         (400, "text/plain", (buffer_of_string error))
     | ResNotFound ->
+        Logger.debug (Printf.sprintf "[UiServer] ResNotFound");
         (404, "", buffer_of_string "")
 
   let make_http_hander handler = (fun server http_req send_res ->
     let request = parse_http_request http_req in
     let write_res res =
       let (status, content_type, res_string) = build_response res in
-      Logger.debug (Printf.sprintf "[UiServer] send HTTP response");
-      Logger.debug (Printf.sprintf "  status : %d" status);
-      Logger.debug (Printf.sprintf "  content_type : %s" content_type);
+      Logger.debug (Printf.sprintf "[UiServer] send HTTP response, status = %d" status);
       send_res status content_type res_string
     in
     handler server request write_res)

@@ -70,6 +70,7 @@ module type Sys = sig
   val open_app : string -> unit
   val exists_file : string -> bool
   val chdir : string -> unit
+  val now : unit -> string
 end
 
 module type Interface = sig

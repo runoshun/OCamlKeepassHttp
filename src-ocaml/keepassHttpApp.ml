@@ -4,14 +4,14 @@ module Make(Backend : Backends.Interface) : sig
   type app
   type app_config = AppConfig.t
 
-  val start_app : app_config -> string option -> err_callback:(string -> unit) -> callback:(unit -> unit) -> app
+  val start_app : (UiServerTypes.action -> unit) -> app_config -> string option ->
+                   err_callback:(string -> unit) -> callback:(unit -> unit) -> app
   val stop_app  : app -> unit
 
 end = struct
 
   module Provider = KeepassProvider.Make(Backend)
   module KeepassHttpServer = KeepassHttpServer.Make(Backend)
-  module UserPrompt = UserPrompt.MakeHttpPrompt(Backend)
 
   module KeepassDb = Backend.KeepassDb
   module Cipher = Backend.Cipher
@@ -79,7 +79,7 @@ end = struct
       | (Some w_host, None) -> Logger.debug "[KeepssHttp] can't get entry url's host."; false
     )
 
-  let make_app config = KeepassHttpServer.create_server (fun _ req send_res ->
+  let make_app post_action config = KeepassHttpServer.create_server (fun _ req send_res ->
     let open Provider in
     let open KeepassHttpServer in
     let open Result.Monad in
@@ -101,25 +101,42 @@ end = struct
 
         | ReqAssociate (req_assoc) ->
             let key = req_assoc.req_key in
-            let options = {
-              UserPrompt.message = Printf.sprintf "New client associate request received. key : %s"
-                                     (Base64.to_string key);
-              UserPrompt.input_password = false;
-            } in
-            UserPrompt.prompt ~options (fun new_client_id ->
-              with_send_res begin
-                provider_or_error >>= fun provider ->
-                new_client_id >>= fun new_client_id ->
-                gen_response_cipher new_client_id key >>= fun (_,nonce,verifier) ->
-                let res_common = {
-                  res_success = true;
-                  res_nonce = nonce;
-                  res_verifier = verifier } in
-                let res_assoc = { res_id = new_client_id; } in
-                create_client_config provider ~client_id:new_client_id ~client_key:key;
-                save provider;
-                return (ResAssociate (res_common,res_assoc))
-              end)
+            let perform data callback =
+              begin match data with
+              | `String new_client_id ->
+                  begin match
+                    provider_or_error >>= fun provider ->
+                    if new_client_id = "" then
+                      Result.Error "client id can not be empty."
+                    else
+                      Result.Ok new_client_id >>= fun new_client_id ->
+                    gen_response_cipher new_client_id key >>= fun (_,nonce,verifier) ->
+                    let res_common = {
+                      res_success = true;
+                      res_nonce = nonce;
+                      res_verifier = verifier } in
+                    let res_assoc = { res_id = new_client_id; } in
+                    create_client_config provider ~client_id:new_client_id ~client_key:key;
+                    save provider;
+                    return (ResAssociate (res_common,res_assoc))
+                  with
+                  | Result.Ok res ->
+                      callback (Result.Ok "successfully associated");
+                      send_res res
+                  | Result.Error e ->
+                      callback (Result.Error e);
+                      send_res ResFailed
+                  end
+              | _ ->
+                  callback (Result.Error "invalid data");
+                  send_res ResFailed
+              end in
+            post_action UiServerTypes.{
+              act_id = Uuid.gen_v4 ();
+              act_type = ActTypeAssociate (Base64.to_string key);
+              act_date = Sys.now ();
+              act_perform = perform;
+            }
 
         | ReqGetLogins (req_auth, req_get_logins) ->
             with_send_res begin
@@ -161,7 +178,7 @@ end = struct
             with_send_res (return ResFailed)
       end))
 
-  let start_app app_config pass ~err_callback ~callback =
+  let start_app post_action app_config pass ~err_callback ~callback =
     let open AppConfig in
     let keyfile = match app_config.keepass_db_keyfile with
     | "" -> None
@@ -172,7 +189,7 @@ end = struct
         ~keyfile:keyfile
         ~password:pass
         app_config.keepass_db in
-    let app = make_app provider_config in
+    let app = make_app post_action provider_config in
     KeepassHttpServer.start_server
       ~port:app_config.httpserver_port
       ~host:app_config.httpserver_host

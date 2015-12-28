@@ -4,17 +4,18 @@ module type Interface = sig
   type app
   type 'a app_state
 
-  val start_app : 'a app_state  -> ((string option -> unit) -> unit) -> app
+  val start_app : 'a app_state -> ((UiServerTypes.action -> unit) -> (string option -> unit) -> unit) -> app
   val stop_app  : app -> unit
 
 end
 
 module Make(Backend:Backends.Interface) : Interface with
- type 'a app_state := 'a UiServerTypes.app_state
- = struct
+ type 'a app_state := 'a UiServerTypes.app_state = struct
 
   module UiServerImpl = UiServer.Make(Backend)
   module Sys = Backend.Sys
+
+  open UiServerTypes
 
   type app = UiServerImpl.t
 
@@ -35,6 +36,44 @@ module Make(Backend:Backends.Interface) : Interface with
         return (config, password))
     with
     | e -> Result.Error (Printexc.to_string e)
+
+  let string_as_json str =
+    try Result.Ok (Yojson.Safe.from_string str) with
+    | _ -> Result.Error "invalid json"
+
+  let json_as_string json =
+    match json with
+    | `String s -> Result.Ok s
+    | _ -> Result.Error "invalid json, expected string."
+
+  let json_as_assoc json =
+    match json with
+    | `Assoc assoc -> Result.Ok assoc
+    | _ -> Result.Error "invalid json, expected assoc."
+
+  let json_find_assoc field assoc =
+    match List.assoc field assoc with
+    | json -> Result.Ok json
+    | exception Not_found -> Result.Error (Printf.sprintf "field '%s' is not found." field)
+
+  let find_action actions assoc =
+    let open Result.Monad in
+    json_find_assoc "id" assoc >>= fun id ->
+    json_as_string id >>= fun id ->
+    try return (List.find (fun act -> id = (Uuid.to_string (act.act_id))) actions) with
+    | Not_found -> Result.Error "action is not found."
+
+  let make_post_action app_state = fun action ->
+    match action.act_type with
+    | ActTypeAssociate _ ->
+        if List.exists (fun act -> act.act_type = action.act_type) !(app_state.actions) then
+          ()
+        else
+          let config = !(app_state.UiServerTypes.config) in
+          Sys.open_app (Printf.sprintf "http://%s:%d/index.html"
+                         config.AppConfig.configserver_host
+                         config.AppConfig.configserver_port);
+          app_state.actions := action :: !(app_state.actions)
 
   let make_app_handler app_state restart_server = fun server req send_res ->
     let open UiServerImpl in
@@ -57,14 +96,45 @@ module Make(Backend:Backends.Interface) : Interface with
         | Result.Error e ->
             send_res (ResError e)
         end
+    | ReqPostAction(body) ->
+        Logger.debug ("[UiServer] ReqPostAction : ");
+        Logger.debug ("  body : " ^ body);
+        let open Result.Monad in
+        begin match
+          string_as_json body >>= fun json ->
+          json_as_assoc json >>= fun assoc ->
+          find_action !(app_state.actions) assoc >>= fun action ->
+          json_find_assoc "data" assoc >>= fun data ->
+          action.act_perform data (function
+            | Result.Ok _ ->
+                app_state.actions := List.filter ((<>) action) !(app_state.actions);
+                send_res ResSuccess
+            | Result.Error e -> send_res (ResInvalid e));
+          return ()
+        with
+        | Result.Ok () -> ()
+        | Result.Error e -> send_res (ResError e)
+        end
+    | ReqPostDeleteAction(body) ->
+        Logger.debug ("[UiServer] ReqPostDeleteAction : ");
+        Logger.debug ("  body : " ^ body);
+        let open Result.Monad in
+        begin match
+          string_as_json body >>= fun json ->
+          json_as_assoc json >>= fun assoc ->
+          find_action !(app_state.actions) assoc >>= fun action ->
+          app_state.actions := (List.filter ((<>) action) !(app_state.actions));
+          return ()
+        with
+        | Result.Ok () -> send_res ResSuccess
+        | Result.Error e -> send_res (ResError e)
+        end
     | ReqPostRestartKeepassHttpServer ->
         Logger.debug ("[UiServer] ReqPostRestartKeepassHttpServer");
         begin try
-          (* save config to file *)
           let open UiServerTypes in
           Sys.write_file !(app_state.config_path) (AppConfig.to_string ~pretty:true !(app_state.config));
-          (* restart server *)
-          restart_server (function
+          restart_server (make_post_action app_state) (function
             | Some e -> send_res (ResError e)
             | None   -> send_res (ResSuccess))
         with

@@ -66,3 +66,10 @@ let exists_file file =
   | Js.Error e -> false
 
 let chdir path = js_process##chdir (Js.string path)
+
+let now () =
+  let d = jsnew Js.date_now () in
+  let date = Js.to_string (d##toLocaleDateString ()) in
+  let time = Js.to_string (d##toLocaleTimeString ()) in
+  Printf.sprintf "%s %s" date time
+

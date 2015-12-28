@@ -10,6 +10,9 @@
     .ui.label.floated.right {
       float : right;
     }
+    .action {
+      margin : 2em 0;
+    }
     body > div.container {
       margin : 2em;
     }
@@ -23,6 +26,7 @@
 <body>
   <div class="ui container text">
 
+    <!-- config form -->
     <div class="ui attached message clearfix">
       <div class="header">
         Node-Keepass-Http Config
@@ -39,6 +43,10 @@
         <label>Keepass Database Key File</label>
         <input name="keepass_db_keyfile" placeholder="Default:None" type="text">
       </div>
+      <div class="field">
+        <label>Keepass Database</label>
+        <input name="keepass_db" placeholder="/path/to/keepassdb.kdbx" type="text">
+      </div>
       <div class="two fields">
         <div class="twelve wide field">
           <label>KeepassHttp Server Host</label>
@@ -49,10 +57,6 @@
           <input name="httpserver_port" placeholder="Default:19455" type="number">
         </div>
       </div>
-      <div class="field">
-        <label>Keepass Database</label>
-        <input name="keepass_db" placeholder="/path/to/keepassdb.kdbx" type="text">
-      </div>
 
       <div class="clearfix">
         <div class="ui right floated blue labeled icon submit button">
@@ -62,9 +66,40 @@
       </div>
     </form>
 
-      <div id="error-msg" class="ui error message hidden">
-        <i class="icon remove red"></i>
-        <span class="content"></span>
+    <!-- queued actions -->
+    <div id="queued-actions" style="display:none">
+    </div>
+
+    <!-- error message -->
+    <div id="error-msg" class="ui error message hidden">
+      <i class="icon remove red"></i>
+      <span class="content"></span>
+    </div>
+
+    <!-- action template -->
+    <div id="associate-tmpl" class="action" style="display:none">
+      <div class="ui attached message">
+        <i class="close icon"></i>
+        <div class="header">
+          <span class="text"></span>
+          <span class="ui left pointing label date"></span>
+        </div>
+        <p class="key"></p>
       </div>
+      <form class="ui form attached fluid segment">
+        <div class="field">
+          <label>New Client Id</label>
+          <input name="data" type="text">
+        </div>
+        <div class="field hidden">
+          <input name="id" type="hidden">
+        </div>
+        <div class="clearfix">
+          <div class="ui right floated blue submit button">Submit</div>
+        </div>
+      </form>
+    </div>
+
+  </div>
 </body>
 

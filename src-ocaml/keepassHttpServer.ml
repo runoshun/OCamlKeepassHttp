@@ -141,9 +141,9 @@ module Make(Backend : Backends.Interface) : Interface  = struct
       Logger.debug "[KeepssHttp] HTTP request received.";
       Logger.debug (Printf.sprintf "  method : %s" http_req.hr_method);
       Logger.debug (Printf.sprintf "  url    : %s" http_req.hr_url);
-      Logger.debug                 "  headers:";
+      Logger.verbose                 "  headers:";
       StringMap.iter (fun k v ->
-        Logger.debug (Printf.sprintf "    %s : %s" k v)) http_req.hr_headers;
+        Logger.verbose (Printf.sprintf "    %s : %s" k v)) http_req.hr_headers;
       Logger.debug (Printf.sprintf "  body   :\n%s" http_req.hr_body);
     );
     let request = parse_request http_req in
