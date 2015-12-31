@@ -33,7 +33,7 @@ type t = {
 }
 
 let js_buffer_of_b64 b64 =
-  jsnew js_Buffer (Js.string (Base64.to_string b64), js_base64)
+  new%js js_Buffer (Js.string (Base64.to_string b64)) js_base64
 
 let spec_to_string spec key =
   match (spec,String.length (Base64.decode key)) with
@@ -48,26 +48,26 @@ let create_cipher spec key iv =
   return { spec_name; key; iv; }
 
 let create_js_cipher {spec_name;key;iv} =
-  js_ctypto##createCipheriv ((Js.string spec_name),(js_buffer_of_b64 key),(js_buffer_of_b64 iv))
+  js_ctypto##createCipheriv (Js.string spec_name) (js_buffer_of_b64 key) (js_buffer_of_b64 iv)
 
 let create_js_decipher {spec_name;key;iv} =
-  js_ctypto##createDecipheriv ((Js.string spec_name),(js_buffer_of_b64 key),(js_buffer_of_b64 iv))
+  js_ctypto##createDecipheriv (Js.string spec_name) (js_buffer_of_b64 key) (js_buffer_of_b64 iv)
 
 let encrypt cipher msg =
   let js_cipher = create_js_cipher cipher in
-  let s1 = Js.to_string (js_cipher##update (Js.string msg, js_utf8, js_base64)) in
-  let s2 = Js.to_string (js_cipher##final (js_base64)) in
+  let s1 = Js.to_string (js_cipher##update (Js.string msg) js_utf8 js_base64) in
+  let s2 = Js.to_string (js_cipher##final js_base64) in
   Base64.of_string (s1 ^ s2)
 
 let decrypt cipher msg =
   let js_dechiper = create_js_decipher cipher in
-  let s1 = Js.to_string (js_dechiper##update (Js.string (Base64.to_string msg), js_base64, js_utf8)) in
-  let s2 = Js.to_string (js_dechiper##final (js_utf8)) in
+  let s1 = Js.to_string (js_dechiper##update (Js.string (Base64.to_string msg)) js_base64 js_utf8) in
+  let s2 = Js.to_string (js_dechiper##final js_utf8) in
   s1 ^ s2
 
 let gen_nonce () =
-  let now : Js.date Js.t = jsnew Js.date_now () in
-  Random.init (now##getMilliseconds ());
+  let now : Js.date Js.t = new%js Js.date_now in
+  Random.init (now##getMilliseconds);
   let s = String.init 16 (fun _ ->
     let i = match (Random.int (26 + 26 + 10)) with
     | n when n < 26      -> (int_of_char 'a') + n

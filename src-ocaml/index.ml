@@ -7,7 +7,7 @@ let start () =
 
 let () =
   let m = Js.Unsafe.js_expr "module" in
-  m##exports <- Js.Unsafe.obj [|
+  m##.exports := Js.Unsafe.obj [|
     ("start", Js.Unsafe.inject (Js.wrap_callback start))
   |]
 

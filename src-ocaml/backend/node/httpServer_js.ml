@@ -4,6 +4,8 @@ class type js_httpserver = object end
 
 class type js_buffer = object end
 
+let js_Buffer : (js_string t -> js_buffer t) constr = Js.Unsafe.variable "Buffer"
+
 class type js_request = object
   method _method     : js_string t prop
   method _url        : js_string t prop
@@ -84,15 +86,15 @@ type raw_request = {
 
 let create_server handler =
   let js_handler = Js.wrap_callback (fun server (js_req:js_request t) send_res ->
-    let header_keys = Array.to_list (Js.to_array (js_req##_headerKeys)) in
-    let header_vals = Array.to_list (Js.to_array (js_req##_headerVals)) in
+    let header_keys = Array.to_list (Js.to_array (js_req##._headerKeys)) in
+    let header_vals = Array.to_list (Js.to_array (js_req##._headerVals)) in
     let headers = List.fold_left2
       (fun m k v -> StringMap.add (String.lowercase (Js.to_string k)) (Js.to_string v) m)
       StringMap.empty header_keys header_vals in
     let req = {
-      hr_method = Js.to_string (js_req##_method);
-      hr_body   = Js.to_string (js_req##_body);
-      hr_url    = Js.to_string (js_req##_url);
+      hr_method = Js.to_string (js_req##._method);
+      hr_body   = Js.to_string (js_req##._body);
+      hr_url    = Js.to_string (js_req##._url);
       hr_headers = headers } in
     handler server req (fun status content_type res -> send_res status (Js.string content_type) res))
   in
@@ -103,14 +105,13 @@ let start_server server ~port ~host ~callback ~err_callback =
   let js_err_cb = Js.wrap_callback (fun s ->
     err_callback (Js.to_string s))
   in
-  libhttpserver##startServer (server,js_port,Js.string host,
-                              Js.wrap_callback callback, js_err_cb)
+  libhttpserver##startServer server js_port (Js.string host) (Js.wrap_callback callback) js_err_cb
 
 let stop_server server =
   libhttpserver##stopServer (server)
 
 let buffer_of_string str : js_buffer t =
-  jsnew (Js.Unsafe.variable "Buffer") (Js.string str)
+  new%js js_Buffer (Js.string str)
 
 let buffer_of_file path : js_buffer t =
   js_fs##readFileSync (Js.string path)

@@ -12,7 +12,7 @@ let test_httpserver_get () =
     assert_equal ~printer:(fun x->x) (StringMap.find "testheader" req.HttpServer_js.hr_headers) "Test";
     send_res 200 "text/plain" (buffer_of_string "hello from server"))
   in
-  Js.Unsafe.global##__stopServer1 <- Js.wrap_callback (fun () -> HttpServer_js.stop_server server);
+  Js.Unsafe.global##.__stopServer1 := Js.wrap_callback (fun () -> HttpServer_js.stop_server server);
   HttpServer_js.start_server server ~port:8080 ~host:"127.0.0.1" ~err_callback:(fun _ -> ()) ~callback:(fun () ->
     Js.Unsafe.eval_string "
       var http = require('http');
@@ -57,7 +57,7 @@ let test_httpserver_post () =
     assert_equal ~printer:(fun x->x) (StringMap.find "testheader" req.HttpServer_js.hr_headers) "Test";
     send_res 200 "text/plain" (buffer_of_string "hello from server"))
   in
-  Js.Unsafe.global##__stopServer2 <- Js.wrap_callback (fun () -> HttpServer_js.stop_server server);
+  Js.Unsafe.global##.__stopServer2 := Js.wrap_callback (fun () -> HttpServer_js.stop_server server);
   HttpServer_js.start_server server ~port:8081 ~host:"127.0.0.1" ~err_callback:(fun _ -> ()) ~callback:(fun () ->
     Js.Unsafe.eval_string "
       var http = require('http');
