@@ -31,7 +31,6 @@ Other fields are generated automatically when config changed.
 # Building
 ## Build Requirements
 OCaml version >= 4.02.1
-GNU Make >= 4.0
 
 Following OCaml libraries are required for build.
 
@@ -41,5 +40,6 @@ Following OCaml libraries are required for build.
 - ppx\_deriving
 
 ## Build and Run
-    make
+    sh ./build.sh
     node -e "require('./index.js').start()"
+
