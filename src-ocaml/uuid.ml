@@ -8,13 +8,13 @@ let to_string t =
 
 let of_string s =
   try
-    Result.Ok
+    MyResult.Ok
       (Scanf.sscanf s "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x"
        (fun x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 ->
          [| x0; x1; x2; x3; x4; x5; x6; x7; x8; x9; x10; x11; x12; x13; x14; x15; |]))
   with
   | Scanf.Scan_failure s ->
-      Result.Error ("can't parse as uuid: " ^ s)
+      MyResult.Error ("can't parse as uuid: " ^ s)
 
 let to_hex_base64 t =
   let bytes = Bytes.init 16 (fun i -> char_of_int t.(i)) in

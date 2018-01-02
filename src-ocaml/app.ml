@@ -26,14 +26,16 @@ module Make(Backend:Backends.Interface) = struct
     let db = !(state.config).keepass_db in
     let cfg = Provider.make_config ~password ~keyfile db in
     Provider.with_provider cfg (function
-      | Result.Error e -> thunk (Some e)
-      | Result.Ok _  -> thunk None)
+      | MyResult.Error e -> thunk (Some e)
+      | MyResult.Ok _  -> thunk None)
 
   let show_ui_screen state =
     let config = !(state.UiServerTypes.config) in
-    Sys.open_app (Printf.sprintf "http://%s:%d/index.html"
+    let url = Printf.sprintf "http://%s:%d/index.html"
                    config.AppConfig.configserver_host
-                   config.AppConfig.configserver_port)
+                   config.AppConfig.configserver_port in
+    Logger.info (Printf.sprintf "open %s" url);
+    Sys.open_app url
 
   let make_restart_server state = fun post_action _done ->
     let open UiServerTypes in
@@ -63,22 +65,22 @@ module Make(Backend:Backends.Interface) = struct
     } in
     let restart_server = make_restart_server state in
     UiApp.start_app state restart_server |> ignore;
-    show_ui_screen state
+    UiApp.open_ui state
 
   let parse_opts argv =
     let open Arg in
     let config = ref (Filename.concat home_dir ".node-keepass-http.conf") in
     let debug = ref 2 in
     let spec_list = [
-      ("-c", Set_string config, "set config file. default='~/.node-keepass-http.conf'");
-      ("-v", Set_int debug,     "set log level. default=2");
+      ("-c", Set_string config,  "set config file. default='~/.node-keepass-http.conf'");
+      ("-v", Set_int debug,      "set log level. default=2");
     ] in
     Arg.parse_argv argv spec_list Sys.print "Keepass HTTP compatible server running on nodejs. Available options:";
     if Sys.exists_file !config then
       let config_string = try (Sys.read_file !config) with _ -> "{}" in
       (AppConfig.from_string config_string, !debug, !config)
     else
-      (Result.Error "config file is not found", !debug, !config)
+      (MyResult.Error "config file is not found", !debug, !config)
 
   let main exec_dir =
     Sys.chdir exec_dir;
@@ -86,10 +88,10 @@ module Make(Backend:Backends.Interface) = struct
       let (app_config,log_level,config_path) = parse_opts Sys.command_line_args in
       Logger.set_log_level log_level;
       let app_config = begin match app_config with
-      | Result.Error e ->
+      | MyResult.Error e ->
           Logger.info e;
           AppConfig.default
-      | Result.Ok app_config -> app_config
+      | MyResult.Ok app_config -> app_config
       end in
       Logger.debug ("config = " ^ (AppConfig.to_string app_config));
       start app_config config_path

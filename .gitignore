@@ -1,9 +1,12 @@
 _build/
 node_modules/
 .merlin
-*.byte
-*.native
-*.js
+/*.byte
+/*.native
+/index.js
+/test_all.js
 node-keepass-http-*.tgz
 test-data/create_and_save.kdbx
 test-data/provider.kdbx
+test-data/saved.kdbx
+semantic/dist/

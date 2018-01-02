@@ -5,7 +5,7 @@ module type Cipher = sig
   type cipher_spec =
     | AES_CBC
 
-  val create_cipher : cipher_spec -> Base64.t -> Base64.t -> t Result.t
+  val create_cipher : cipher_spec -> Base64.t -> Base64.t -> t MyResult.t
   val encrypt : t -> string -> Base64.t
   val decrypt : t -> Base64.t -> string
 
