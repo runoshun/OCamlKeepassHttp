@@ -27,17 +27,18 @@ end = struct
   let gen_req_cipher provider request_auth =
     let open KeepassHttpServer in
     let open Cipher in
-    let open Result.Monad in
+    let open MyResult.Monad in
     let nonce = request_auth.req_nonce in
     Provider.get_client_key provider request_auth.req_id >>= fun key ->
+      Logger.verbose (Printf.sprintf "[KeepssHttp] client key found: %s" (Base64.decode key));
       create_cipher AES_CBC key nonce >>= fun cipher ->
         if verify cipher request_auth.req_nonce request_auth.req_verifier then
           return cipher
         else
-          Result.Error "authentication of client is failed."
+          MyResult.Error "authentication of client is failed."
 
   let gen_response_cipher client_id key =
-    let open Result.Monad in
+    let open MyResult.Monad in
     let open Cipher in
     let nonce = gen_nonce () in
     create_cipher AES_CBC key nonce >>= fun cipher ->
@@ -46,7 +47,7 @@ end = struct
 
   let gen_res_common provider req_auth =
     let open KeepassHttpServer in
-    let open Result.Monad in
+    let open MyResult.Monad in
     let id = req_auth.req_id in
     Provider.get_client_key provider id >>= fun key ->
       gen_response_cipher id key >>= fun (cipher,nonce,verifier) ->
@@ -82,11 +83,11 @@ end = struct
   let make_app post_action config = KeepassHttpServer.create_server (fun _ req send_res ->
     let open Provider in
     let open KeepassHttpServer in
-    let open Result.Monad in
+    let open MyResult.Monad in
     let with_send_res res =
       match res with
-      | Result.Ok res -> send_res res
-      | Result.Error msg ->
+      | MyResult.Ok res -> send_res res
+      | MyResult.Error msg ->
           Logger.error ("[KeepssHttp] " ^ msg);
           send_res ResFailed in
     with_provider config (fun provider_or_error ->
@@ -107,9 +108,9 @@ end = struct
                   begin match
                     provider_or_error >>= fun provider ->
                     if new_client_id = "" then
-                      Result.Error "client id can not be empty."
+                      MyResult.Error "client id can not be empty."
                     else
-                      Result.Ok new_client_id >>= fun new_client_id ->
+                      MyResult.Ok new_client_id >>= fun new_client_id ->
                     gen_response_cipher new_client_id key >>= fun (_,nonce,verifier) ->
                     let res_common = {
                       res_success = true;
@@ -120,15 +121,15 @@ end = struct
                     save provider;
                     return (ResAssociate (res_common,res_assoc))
                   with
-                  | Result.Ok res ->
-                      callback (Result.Ok "successfully associated");
+                  | MyResult.Ok res ->
+                      callback (MyResult.Ok "successfully associated");
                       send_res res
-                  | Result.Error e ->
-                      callback (Result.Error e);
+                  | MyResult.Error e ->
+                      callback (MyResult.Error e);
                       send_res ResFailed
                   end
               | _ ->
-                  callback (Result.Error "invalid data");
+                  callback (MyResult.Error "invalid data");
                   send_res ResFailed
               end in
             post_action UiServerTypes.{

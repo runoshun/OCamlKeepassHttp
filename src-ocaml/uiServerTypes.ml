@@ -5,7 +5,7 @@ type action = {
   act_id   : Uuid.t;
   act_type : action_type;
   act_date : string;
-  act_perform : Yojson.Safe.json -> (string Result.t -> unit) -> unit;
+  act_perform : Yojson.Safe.json -> (string MyResult.t -> unit) -> unit;
 }
 
 type 'a app_state = {

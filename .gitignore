@@ -4,6 +4,8 @@ node_modules/
 *.byte
 *.native
 *.js
+!js/*.js
 node-keepass-http-*.tgz
 test-data/create_and_save.kdbx
 test-data/provider.kdbx
+semantic/dist/

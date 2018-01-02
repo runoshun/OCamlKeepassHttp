@@ -1,11 +1,11 @@
 {
   "name": "node-keepass-http",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "keepass http compatible server running on nodejs",
   "bin": "bin/node-keepass-http",
   "main": "index.js",
   "dependencies": {
-    "keepass.io": "~1.1.0",
+    "keepass.io": "~1.1.4",
     "open": "*"
   },
   "repository": {
@@ -23,5 +23,5 @@
     "ocaml"
   ],
   "author": "Shunsuke Fukuda",
-  "license": "GPLv3"
+  "license": "GPL-3.0"
 }

@@ -5,9 +5,9 @@ module type Interface = sig
   type keepass_entry
 
   val make_config    : password:string option -> keyfile:string option -> string -> provider_config
-  val with_provider  : provider_config -> (t Result.t -> unit) -> unit
+  val with_provider  : provider_config -> (t MyResult.t -> unit) -> unit
 
-  val get_client_key : t -> string -> Base64.t Result.t
+  val get_client_key : t -> string -> Base64.t MyResult.t
   val search_entries : t -> ?path:string list -> (keepass_entry -> bool) -> keepass_entry list
   val create_login   : t -> url:string -> login:string -> password:string -> unit
   val create_client_config : t -> client_id:string -> client_key:Base64.t -> unit
@@ -69,10 +69,10 @@ struct
     let open KeepassDb in
     let entries = search_entries provider ~path:clients_path (fun e -> e.kp_title = (Some client_id)) in
     if List.length entries = 0 then
-      Result.Error ("no client key found. client id = " ^ client_id)
+      MyResult.Error ("no client key found. client id = " ^ client_id)
     else
       match (List.hd entries).kp_password with
-      | Some pass -> Result.Ok (Base64.of_string pass)
+      | Some pass -> MyResult.Ok (Base64.of_string pass)
       | None      -> assert false
 
   let save provider =
@@ -86,7 +86,7 @@ struct
     try KeepassDb.open_db cfg.db_path ~password:cfg.password ~keyfile:cfg.keyfile
       (fun db err ->
          match err with
-         | Some e -> thunk (Result.Error e)
+         | Some e -> thunk (MyResult.Error e)
          | None   ->
              let provider = {
                db = db;
@@ -95,9 +95,9 @@ struct
              } in
              Logger.debug (Printf.sprintf "[Provider] keepass database '%s' is opened." cfg.db_path);
              (*Logger.debug (KeepassDb.dump_db db);*)
-             thunk (Result.Ok provider);
+             thunk (MyResult.Ok provider);
              save provider)
     with
-    | e -> thunk (Result.Error (Printexc.to_string e))
+    | e -> thunk (MyResult.Error (Printexc.to_string e))
 
 end

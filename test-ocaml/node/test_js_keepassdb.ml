@@ -10,36 +10,36 @@ let create_and_save_db_path   = "test-data/create_and_save.kdbx"
 let password = Some "test"
 let keyfile = Some "test-data/keyfile.key"
 
-let pass_db     = ref (Result.Error "db is not set.")
-let keyfile_db  = ref (Result.Error "db is not set.")
-let both_db     = ref (Result.Error "db is not set.")
-let saved_db    = ref (Result.Error "db is not set.")
-let create_and_save_db = ref (Result.Error "db is not set.")
+let pass_db     = ref (MyResult.Error "db is not set.")
+let keyfile_db  = ref (MyResult.Error "db is not set.")
+let both_db     = ref (MyResult.Error "db is not set.")
+let saved_db    = ref (MyResult.Error "db is not set.")
+let create_and_save_db = ref (MyResult.Error "db is not set.")
 
 let set_db ref db err =
   match err with
-  | Some e -> ref := Result.Error e
-  | None   -> ref := Result.Ok db
+  | Some e -> ref := MyResult.Error e
+  | None   -> ref := MyResult.Ok db
 
 let test_open_password_db () =
   match !pass_db with
-  | Result.Error s -> assert_failure s
-  | Result.Ok db -> ()
+  | MyResult.Error s -> assert_failure s
+  | MyResult.Ok db -> ()
 
 let test_open_keyfile_db () =
   match !keyfile_db with
-  | Result.Error s -> assert_failure s
-  | Result.Ok db -> ()
+  | MyResult.Error s -> assert_failure s
+  | MyResult.Ok db -> ()
 
 let test_open_both_db () =
   match !both_db with
-  | Result.Error s -> assert_failure s
-  | Result.Ok db -> ()
+  | MyResult.Error s -> assert_failure s
+  | MyResult.Ok db -> ()
 
 let test_get_entries_all () =
   match !pass_db with
-  | Result.Error s -> assert_failure s
-  | Result.Ok db ->
+  | MyResult.Error s -> assert_failure s
+  | MyResult.Ok db ->
       let entries = KeepassDb_js.get_entries db in
       let printer = function Some s -> s | None -> "None" in
       assert_equal 2 (Array.length entries);
@@ -64,8 +64,8 @@ let test_get_entries_all () =
 
 let test_create_entry () =
   match !keyfile_db with
-  | Result.Error s -> assert_failure s
-  | Result.Ok db ->
+  | MyResult.Error s -> assert_failure s
+  | MyResult.Ok db ->
       let uuid = Uuid.gen_v4 () in
       let printer = function Some s -> s | None -> "None" in
       KeepassDb_js.create_entry db ["TestGroup"; "TestEntries"]
@@ -92,8 +92,8 @@ let test_create_entry () =
 
 let setup_save_db_test thunk =
   begin match !both_db with
-  | Result.Error m -> assert_failure ("setup_save_db is failed." ^ m)
-  | Result.Ok db ->
+  | MyResult.Error m -> assert_failure ("setup_save_db is failed." ^ m)
+  | MyResult.Ok db ->
       KeepassDb_js.save_db db saved_db_path (fun db err ->
         begin match err with
         | Some m -> assert_failure ("setup_save_db is failed." ^ m)
@@ -106,8 +106,8 @@ let setup_save_db_test thunk =
 
 let test_save_db () =
   match !saved_db with
-  | Result.Error m -> assert_failure m
-  | Result.Ok db ->
+  | MyResult.Error m -> assert_failure m
+  | MyResult.Ok db ->
       let entries = KeepassDb_js.get_entries db in
       assert_equal 2 (Array.length entries)
 
@@ -116,8 +116,8 @@ let setup_create_and_savedb thunk =
       set_db create_and_save_db db err;
       (* create entry *)
       begin match !create_and_save_db with
-      | Result.Error m -> assert_failure ("setup_create_and_savedb is failed. " ^ m)
-      | Result.Ok db ->
+      | MyResult.Error m -> assert_failure ("setup_create_and_savedb is failed. " ^ m)
+      | MyResult.Ok db ->
           KeepassDb_js.create_entry db ["***TestGroup***"; "******TestEntries*****"]
             { kp_uuid  = (Uuid.to_string (Uuid.gen_v4 ()));
               kp_title = Some "Test Entry";
@@ -133,8 +133,8 @@ let setup_create_and_savedb thunk =
 
 let test_create_and_savedb () =
   match !create_and_save_db with
-  | Result.Error m -> assert_failure ("test_create_and_savedb failed. " ^ m)
-  | Result.Ok db ->
+  | MyResult.Error m -> assert_failure ("test_create_and_savedb failed. " ^ m)
+  | MyResult.Ok db ->
       let entries = KeepassDb_js.get_entries db in
       let printer = function Some s -> s | None -> "None" in
       assert_equal ~printer:string_of_int 3 (Array.length entries);

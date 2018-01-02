@@ -20,17 +20,21 @@ module Make(Backend : Backends.Interface) : Interface  = struct
 
   type t = Backend.HttpServer.httpserver
 
-  let find_string_val key keyvals =
-    match List.assoc key keyvals with
-    | `String v  -> Result.Ok v
+  let find_string_val ?(default=None) key keyvals =
+    match (List.assoc key keyvals, default) with
+    | (`String v, _)  -> MyResult.Ok v
+    | (_, Some(v)) -> MyResult.Ok v
     | _ ->
-        Result.Error (Printf.sprintf "property '%s' is not string" key)
+        MyResult.Error (Printf.sprintf "property '%s' is not string" key)
     | exception Not_found ->
-        Result.Error (Printf.sprintf "key : '%s' is not found." key)
+        begin match default with
+        | None -> MyResult.Error (Printf.sprintf "key : '%s' is not found." key)
+        | Some(v) -> MyResult.Ok v
+        end
 
   let create_auth_req keyvals =
-    let open Result.Monad in
-    find_string_val "Id" keyvals >>= fun id ->
+    let open MyResult.Monad in
+    find_string_val ~default:(Some "") "Id" keyvals >>= fun id ->
     find_string_val "Nonce" keyvals >>= fun nonce ->
     find_string_val "Verifier" keyvals >>= fun verifier ->
     return {
@@ -39,26 +43,26 @@ module Make(Backend : Backends.Interface) : Interface  = struct
       req_verifier = Base64.of_string verifier; }
 
   let parse_request_json (json:Yojson.Safe.json) =
-    let open Result.Monad in
+    let open MyResult.Monad in
     match json with
     | `Assoc keyvals ->
         let res_or_error =
           begin match find_string_val "RequestType" keyvals with
-          | Result.Ok "test-associate" ->
+          | MyResult.Ok "test-associate" ->
               create_auth_req keyvals >>= fun auth_req ->
               return (ReqTestAssociate auth_req)
-          | Result.Ok "associate" ->
+          | MyResult.Ok "associate" ->
               find_string_val "Key" keyvals >>= fun key ->
               return (ReqAssociate { req_key = Base64.of_string key })
-          | Result.Ok "get-logins" ->
+          | MyResult.Ok "get-logins" ->
               create_auth_req keyvals >>= fun auth_req ->
               find_string_val "Url" keyvals >>= fun url ->
               return (ReqGetLogins (auth_req, { req_url = Base64.of_string url; }))
-          | Result.Ok "get-logins-count" ->
+          | MyResult.Ok "get-logins-count" ->
               create_auth_req keyvals >>= fun auth_req ->
               find_string_val "Url" keyvals >>= fun url ->
               return (ReqGetLoginsCount (auth_req, { req_url = Base64.of_string url; }))
-          | Result.Ok "set-login" ->
+          | MyResult.Ok "set-login" ->
               create_auth_req keyvals >>= fun auth_req ->
               find_string_val "SubmitUrl" keyvals >>= fun submit_url ->
               find_string_val "Login" keyvals >>= fun login ->
@@ -69,14 +73,14 @@ module Make(Backend : Backends.Interface) : Interface  = struct
                 req_password = Base64.of_string password;
               } in
               return (ReqSetLogin (auth_req, set_login_req))
-          | Result.Ok req_type ->
-              Result.Error ("Unknown RequestType : " ^ req_type)
-          | Result.Error msg ->
-              Result.Error msg
+          | MyResult.Ok req_type ->
+              MyResult.Error ("Unknown RequestType : " ^ req_type)
+          | MyResult.Error msg ->
+              MyResult.Error msg
           end in
         begin match res_or_error with
-        | Result.Ok res -> res
-        | Result.Error err ->
+        | MyResult.Ok res -> res
+        | MyResult.Error err ->
             Logger.error err;
             ReqInvalid
         end

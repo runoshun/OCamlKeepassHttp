@@ -37,13 +37,13 @@ let js_buffer_of_b64 b64 =
 
 let spec_to_string spec key =
   match (spec,String.length (Base64.decode key)) with
-  | (AES_CBC,16) -> Result.Ok "aes-128-cbc"
-  | (AES_CBC,24) -> Result.Ok "aes-192-cbc"
-  | (AES_CBC,32) -> Result.Ok "aes-256-cbc"
-  | (AES_CBC,_)  -> Result.Error "can't get cipher spec. invalid key length."
+  | (AES_CBC,16) -> MyResult.Ok "aes-128-cbc"
+  | (AES_CBC,24) -> MyResult.Ok "aes-192-cbc"
+  | (AES_CBC,32) -> MyResult.Ok "aes-256-cbc"
+  | (AES_CBC,_)  -> MyResult.Error "can't get cipher spec. invalid key length."
 
 let create_cipher spec key iv =
-  let open Result.Monad in
+  let open MyResult.Monad in
   spec_to_string spec key >>= fun spec_name ->
   return { spec_name; key; iv; }
 

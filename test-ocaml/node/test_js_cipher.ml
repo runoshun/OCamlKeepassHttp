@@ -4,18 +4,18 @@ let cipher = Cipher_js.create_cipher Cipher_js.AES_CBC (Base64.encode "123456789
 
 let assert_encrypt data encrypted =
   match cipher with
-  | Result.Ok cipher -> 
+  | MyResult.Ok cipher -> 
       let encrypted_msg = Cipher_js.encrypt cipher data in
       assert_equal ~printer:(fun x->x) encrypted (Base64.to_string encrypted_msg)
-  | Result.Error msg ->
+  | MyResult.Error msg ->
       assert_failure msg
 
 let assert_decrypt data encrypted =
   match cipher with
-  | Result.Ok cipher -> 
+  | MyResult.Ok cipher -> 
       let msg = Cipher_js.decrypt cipher (Base64.of_string encrypted) in
       assert_equal ~printer:(fun x->x) data msg
-  | Result.Error msg ->
+  | MyResult.Error msg ->
       assert_failure msg
 
 let encrypt_data1_test () =

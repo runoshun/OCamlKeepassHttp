@@ -17,8 +17,10 @@
     },
     "permission": false,
     "rtl": false,
-    "version": "2.2.4",
+    "version": "2.2.13",
     "components": [
+        "accordion",
+        "tab",
         "reset",
         "site",
         "button",

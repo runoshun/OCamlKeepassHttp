@@ -22,9 +22,13 @@ Following nodejs libraries are required at runtime.
 
 ### Configuration
 node-keepass-http read a configuration file specified by -c option or '~/.node-keepass-http.conf' in default. Example of configuration file is
-
-    {   "configserver_host": "localhost", /* host of config screen server */
-        "configserver_port": 18080        /* port of config screen server */ }
+```
+    {
+        "configserver_host": "localhost", /* host of config screen server */
+        "configserver_port": 18080,       /* port of config screen server */
+        "disable_open_browser": true      /* if true, node-keepass-http does not open browser automatically. */
+    }
+```
 
 Other fields are generated automatically when config changed. 
 
