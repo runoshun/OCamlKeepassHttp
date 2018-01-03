@@ -20,6 +20,11 @@ module Make(Backend : Backends.Interface) : Interface  = struct
 
   type t = Backend.HttpServer.httpserver
 
+  let test_associate_check_response = [
+    ("Success", `Bool false);
+    ("Version", `String "1.4.0.0"); (* for generate password*)
+  ]
+
   let find_string_val ?(default=None) key keyvals =
     match (List.assoc key keyvals, default) with
     | (`String v, _)  -> MyResult.Ok v
@@ -49,8 +54,11 @@ module Make(Backend : Backends.Interface) : Interface  = struct
         let res_or_error =
           begin match find_string_val "RequestType" keyvals with
           | MyResult.Ok "test-associate" ->
-              create_auth_req keyvals >>= fun auth_req ->
-              return (ReqTestAssociate auth_req)
+              let auth_req_result = create_auth_req keyvals in
+              begin match auth_req_result with
+              | MyResult.Ok auth_req -> return (ReqTestAssociate auth_req)
+              | MyResult.Error _ -> return ReqTestAssociateCheck
+              end
           | MyResult.Ok "associate" ->
               find_string_val "Key" keyvals >>= fun key ->
               return (ReqAssociate { req_key = Base64.of_string key })
@@ -73,6 +81,9 @@ module Make(Backend : Backends.Interface) : Interface  = struct
                 req_password = Base64.of_string password;
               } in
               return (ReqSetLogin (auth_req, set_login_req))
+          | MyResult.Ok "generate-password" ->
+              create_auth_req keyvals >>= fun auth_req ->
+              return (ReqGeneratePassword auth_req)
           | MyResult.Ok req_type ->
               MyResult.Error ("Unknown RequestType : " ^ req_type)
           | MyResult.Error msg ->
@@ -122,19 +133,24 @@ module Make(Backend : Backends.Interface) : Interface  = struct
     | ResTestAssociate (common,detail) ->
         let common_res = build_common_res common in
         ("Id", `String detail.res_id) :: common_res
+    | ResTestAssociateCheck ->
+        test_associate_check_response
     | ResAssociate (common,detail) ->
         let common_res = build_common_res common in
         ("Id", `String detail.res_id) :: common_res
     | ResGetLogins (common,detail) ->
         let common_res = build_common_res common in
         ("Id", `String detail.res_id) ::
-        ("Entries", `List (build_entries detail.res_entries)) ::
-        common_res
+        ("Entries", `List (build_entries detail.res_entries)) :: common_res
     | ResGetLoginsCount (common,detail) ->
         let common_res = build_common_res common in
         ("Count", `Int detail.res_count) :: common_res
     | ResSetLogin (common) ->
         build_common_res common
+    | ResGeneratePassword (common,detail) ->
+        let common_res = build_common_res common in
+        ("Id", `String detail.res_id) ::
+        ("Entries", `List (build_entries detail.res_entries)) :: common_res
     | ResFailed ->
         [("Success", `Bool false)]
     in

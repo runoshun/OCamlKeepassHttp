@@ -25,10 +25,12 @@ type request_set_login = {
 
 type request =
   | ReqTestAssociate  of request_auth
+  | ReqTestAssociateCheck
   | ReqAssociate      of request_associate
   | ReqGetLogins      of request_auth * request_get_logins
   | ReqGetLoginsCount of request_auth * request_get_logins
   | ReqSetLogin       of request_auth * request_set_login
+  | ReqGeneratePassword of request_auth
   | ReqInvalid
 [@@deriving show]
 
@@ -70,10 +72,12 @@ type response_get_login_count = {
 
 type response =
   | ResTestAssociate  of response_common * response_test_associate
+  | ResTestAssociateCheck
   | ResAssociate      of response_common * response_associate
   | ResGetLogins      of response_common * response_get_logins
   | ResSetLogin       of response_common
   | ResGetLoginsCount of response_common * response_get_login_count
+  | ResGeneratePassword of response_common * response_get_logins
   | ResFailed
 [@@deriving show]
 

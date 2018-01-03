@@ -80,6 +80,16 @@ end = struct
       | (Some w_host, None) -> Logger.debug "[KeepssHttp] can't get entry url's host."; false
     )
 
+  let generate_password_entries () =
+    let open KeepassDb in
+    [{
+       kp_uuid = Uuid.to_string (Uuid.gen_v4 ());
+       kp_title = None;
+       kp_url = None;
+       kp_username = None;
+       kp_password = Some(PwGenerator.gen PwGenerator.chars_all 16);
+    }]
+
   let make_app post_action config = KeepassHttpServer.create_server (fun _ req send_res ->
     let open Provider in
     let open KeepassHttpServer in
@@ -99,7 +109,7 @@ end = struct
               gen_res_common provider req_auth >>= fun (_,res_common) ->
               return (ResTestAssociate (res_common, { res_id = req_auth.req_id }))
             end
-
+        | ReqTestAssociateCheck -> with_send_res (return ResTestAssociateCheck)
         | ReqAssociate (req_assoc) ->
             let key = req_assoc.req_key in
             let perform data callback =
@@ -174,6 +184,18 @@ end = struct
               create_login provider submit_url login password;
               return (ResSetLogin res_common)
             end
+        | ReqGeneratePassword (req_auth) ->
+            with_send_res (
+              provider_or_error >>= fun provider ->
+              gen_req_cipher provider req_auth >>= fun req_cipher ->
+              gen_res_common provider req_auth >>= fun (res_cipher, res_common) ->
+              let pw_entries = generate_password_entries () in
+              let res_generate_password = {
+                res_id = req_auth.req_id;
+                res_entries = to_login_entries res_cipher pw_entries;
+              } in
+              return (ResGeneratePassword (res_common, res_generate_password))
+            )
         | ReqInvalid ->
             Logger.debug "[KeepssHttp] Invalid request received";
             with_send_res (return ResFailed)
