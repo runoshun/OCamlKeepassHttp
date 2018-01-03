@@ -1,6 +1,6 @@
 {
   "name": "node-keepass-http",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "keepass http compatible server running on nodejs",
   "bin": "bin/node-keepass-http",
   "main": "index.js",
