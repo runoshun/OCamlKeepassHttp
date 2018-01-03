@@ -79,9 +79,10 @@ module Make(Backend:Backends.Interface) : Interface with
     | ActTypeAssociate _ ->
         if List.exists (fun act -> act.act_type = action.act_type) !(app_state.actions) then
           ()
-        else
+        else begin
           open_ui app_state;
           app_state.actions := action :: !(app_state.actions)
+        end
 
   let make_app_handler app_state restart_server = fun server req send_res ->
     let open UiServerImpl in
@@ -116,7 +117,7 @@ module Make(Backend:Backends.Interface) : Interface with
           json_find_assoc "data" assoc >>= fun data ->
           action.act_perform data (function
             | MyResult.Ok _ ->
-                app_state.actions := List.filter ((<>) action) !(app_state.actions);
+                app_state.actions := List.filter (fun other -> action.act_id <> other.act_id) !(app_state.actions);
                 send_res ResSuccess
             | MyResult.Error e -> send_res (ResInvalid e));
           return ()
@@ -132,7 +133,7 @@ module Make(Backend:Backends.Interface) : Interface with
           string_as_json body >>= fun json ->
           json_as_assoc json >>= fun assoc ->
           find_action !(app_state.actions) assoc >>= fun action ->
-          app_state.actions := (List.filter ((<>) action) !(app_state.actions));
+          app_state.actions := (List.filter (fun other -> action.act_id <> other.act_id) !(app_state.actions));
           return ()
         with
         | MyResult.Ok () -> send_res ResSuccess
